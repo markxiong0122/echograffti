@@ -39,7 +39,13 @@ const result = await ai.images.generate({
   quality: "medium",
 });
 
-const imageData = result.data[0].b64_json as string;
+const imageData = result.data?.[0]?.b64_json;
+if (!imageData) {
+  return NextResponse.json(
+    { error: "No image data returned from AI" },
+    { status: 502 }
+  );
+}
 const mimeType = "image/png";
 
     // Upload to Supabase Storage
