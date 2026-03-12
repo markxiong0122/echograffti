@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__plugin_context7-plugin_context7__resolve-library-id",
+      "mcp__plugin_context7-plugin_context7__query-docs",
+      "Bash(git -C /Users/mark/projects/echograffti log --all --oneline)",
+      "Bash(git -C /Users/mark/projects/echograffti remote -v)",
+      "Bash(git -C /Users/mark/projects/echograffti status)",
+      "Bash(git -C /Users/mark/projects/echograffti config --list | head -20)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1)",
+      "Bash(mv .claude /tmp/.claude_backup && mv docs /tmp/docs_backup && npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1)"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv /tmp/.claude_backup /Users/mark/projects/echograffti/.claude 2>/dev/null; mv /tmp/docs_backup /Users/mark/projects/echograffti/docs 2>/dev/null; ls -la /Users/mark/projects/echograffti)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -rf echograffiti_scaffold)",
+      "Bash(npx create-next-app@latest echograffiti_scaffold --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --yes)",
+      "Bash(npm install:*)",
+      "Bash(rm -rf node_modules package-lock.json && pnpm install)",
+      "Bash(pnpm add:*)",
+      "Bash(npx playwright:*)",
+      "Bash(timeout 15 pnpm dev 2>&1 || true)",
+      "Bash(git add:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}

@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchoGraffiti — Design Document</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --spray-pink: #ff2d95;
+    --spray-cyan: #00f0ff;
+    --spray-purple: #a855f7;
+    --spray-yellow: #ffd600;
+    --spray-green: #39ff14;
+    --wall-dark: #0a0a0f;
+    --wall-mid: #141420;
+    --wall-light: #1e1e2e;
+    --wall-surface: #2a2a3a;
+    --text-primary: #e8e6f0;
+    --text-muted: #8888a0;
+    --text-dim: #555570;
+    --brick: #1a1a28;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--spray-purple) var(--wall-dark);
+  }
+
+  body {
+    background: var(--wall-dark);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── Brick wall texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 48px,
+        rgba(255,255,255,0.015) 48px,
+        rgba(255,255,255,0.015) 50px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 98px,
+        rgba(255,255,255,0.012) 98px,
+        rgba(255,255,255,0.012) 100px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Grain overlay ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 256px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── Navigation ── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+  }
+
+  nav .logo {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, var(--spray-pink), var(--spray-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+  }
+
+  nav .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  nav .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    position: relative;
+  }
+
+  nav .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--spray-cyan);
+    transition: width 0.3s;
+  }
+
+  nav .nav-links a:hover { color: var(--spray-cyan); }
+  nav .nav-links a:hover::after { width: 100%; }
+
+  /* ── Sections ── */
+  section {
+    position: relative;
+    z-index: 2;
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 8rem;
+    position: relative;
+  }
+
+  .hero-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--spray-cyan);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 0.4rem 1rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    animation: fadeSlideUp 0.8s ease-out 0.2s both;
+  }
+
+  .hero h1 {
+    font-family: 'Permanent Marker', cursive;
+    font-size: clamp(4rem, 10vw, 9rem);
+    line-height: 0.95;
+    letter-spacing: -2px;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .hero h1 .line-1 {
+    display: block;
+    background: linear-gradient(135deg, var(--spray-pink) 0%, var(--spray-purple) 50%, var(--spray-cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: fadeSlideUp 0.8s ease-out 0.4s both;
+    filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.3));
+  }
+
+  .hero h1 .line-2 {
+    display: block;
+    color: var(--text-primary);
+    -webkit-text-fill-color: var(--text-primary);
+    font-size: 0.45em;
+    letter-spacing: 6px;
+    animation: fadeSlideUp 0.8s ease-out 0.6s both;
+    opacity: 0.7;
+  }
+
+  .hero-tagline {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin-top: 1.5rem;
+    animation: fadeSlideUp 0.8s ease-out 0.8s both;
+    font-weight: 300;
+    line-height: 1.8;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+    animation: fadeSlideUp 0.8s ease-out 1s both;
+  }
+
+  .hero-meta-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .hero-meta-item span {
+    display: block;
+    color: var(--text-dim);
+    margin-bottom: 0.25rem;
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+  }
+
+  .hero-meta-item strong {
+    color: var(--spray-pink);
+    font-weight: 400;
+  }
+
+  /* Spray paint drip decoration */
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: 5%;
+    top: 15%;
+    width: 300px;
+    height: 500px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255, 45, 149, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 60%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+    filter: blur(40px);
+    pointer-events: none;
+    animation: breathe 8s ease-in-out infinite;
+  }
+
+  /* ── Section Headers ── */
+  .section-header {
+    margin-bottom: 4rem;
+  }
+
+  .section-number {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 5rem;
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.15) 0%, transparent 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: -1rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: 'Permanent Marker', cursive;
+    font-size: clamp(2rem, 4vw, 3rem);
+    background: linear-gradient(135deg, var(--spray-pink), var(--spray-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ── Vision Cards ── */
+  .vision-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .vision-card {
+    background: linear-gradient(135deg, var(--wall-mid), var(--wall-light));
+    border: 1px solid rgba(168, 85, 247, 0.1);
+    border-radius: 2px;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .vision-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+
+  .vision-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .vision-card:nth-child(1)::before { background: linear-gradient(90deg, var(--spray-pink), transparent); }
+  .vision-card:nth-child(2)::before { background: linear-gradient(90deg, var(--spray-cyan), transparent); }
+  .vision-card:nth-child(3)::before { background: linear-gradient(90deg, var(--spray-yellow), transparent); }
+
+  .vision-card .icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .vision-card h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .vision-card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* ── Concept Statement ── */
+  .concept-statement {
+    position: relative;
+    padding: 4rem 3rem;
+    margin: 3rem 0;
+    border-left: 4px solid var(--spray-pink);
+    background: linear-gradient(90deg, rgba(255, 45, 149, 0.05), transparent);
+  }
+
+  .concept-statement p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--text-primary);
+  }
+
+  .concept-statement p em {
+    color: var(--spray-cyan);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .concept-statement .attribution {
+    margin-top: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── Architecture ── */
+  .arch-flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 3rem 0;
+    position: relative;
+  }
+
+  .arch-flow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5%;
+    right: 5%;
+    height: 2px;
+    background: linear-gradient(90deg,
+      var(--spray-pink),
+      var(--spray-purple),
+      var(--spray-cyan),
+      var(--spray-green)
+    );
+    opacity: 0.3;
+    z-index: 0;
+  }
+
+  .arch-node {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding: 1rem;
+  }
+
+  .arch-node-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    position: relative;
+  }
+
+  .arch-node:nth-child(1) .arch-node-icon {
+    background: rgba(255, 45, 149, 0.15);
+    border: 2px solid rgba(255, 45, 149, 0.4);
+    box-shadow: 0 0 30px rgba(255, 45, 149, 0.1);
+  }
+  .arch-node:nth-child(2) .arch-node-icon {
+    background: rgba(168, 85, 247, 0.15);
+    border: 2px solid rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.1);
+  }
+  .arch-node:nth-child(3) .arch-node-icon {
+    background: rgba(0, 240, 255, 0.15);
+    border: 2px solid rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+  }
+  .arch-node:nth-child(4) .arch-node-icon {
+    background: rgba(57, 255, 20, 0.15);
+    border: 2px solid rgba(57, 255, 20, 0.4);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.1);
+  }
+
+  .arch-node-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .arch-node-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  /* ── Tech Stack Grid ── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .stack-card {
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 2rem;
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .stack-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stack-card-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .stack-card:nth-child(1) .stack-card-dot { background: var(--spray-pink); box-shadow: 0 0 10px var(--spray-pink); }
+  .stack-card:nth-child(2) .stack-card-dot { background: var(--spray-cyan); box-shadow: 0 0 10px var(--spray-cyan); }
+  .stack-card:nth-child(3) .stack-card-dot { background: var(--spray-purple); box-shadow: 0 0 10px var(--spray-purple); }
+  .stack-card:nth-child(4) .stack-card-dot { background: var(--spray-yellow); box-shadow: 0 0 10px var(--spray-yellow); }
+
+  .stack-card h4 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .stack-list {
+    list-style: none;
+  }
+
+  .stack-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .stack-list li:last-child { border-bottom: none; }
+
+  .stack-list .tech-name { color: var(--text-primary); }
+  .stack-list .tech-role {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── User Journey ── */
+  .journey-timeline {
+    position: relative;
+    padding-left: 3rem;
+    margin: 2rem 0;
+  }
+
+  .journey-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg,
+      var(--spray-pink),
+      var(--spray-purple),
+      var(--spray-cyan),
+      var(--spray-green),
+      transparent
+    );
+  }
+
+  .journey-step {
+    position: relative;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
+  }
+
+  .journey-step::before {
+    content: '';
+    position: absolute;
+    left: -3rem;
+    top: 2rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    transform: translateX(-6px);
+  }
+
+  .journey-step:nth-child(1)::before { background: var(--spray-pink); box-shadow: 0 0 15px var(--spray-pink); }
+  .journey-step:nth-child(2)::before { background: var(--spray-purple); box-shadow: 0 0 15px var(--spray-purple); }
+  .journey-step:nth-child(3)::before { background: var(--spray-cyan); box-shadow: 0 0 15px var(--spray-cyan); }
+  .journey-step:nth-child(4)::before { background: var(--spray-green); box-shadow: 0 0 15px var(--spray-green); }
+
+  .journey-step .step-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .journey-step:nth-child(1) .step-label { color: var(--spray-pink); }
+  .journey-step:nth-child(2) .step-label { color: var(--spray-purple); }
+  .journey-step:nth-child(3) .step-label { color: var(--spray-cyan); }
+  .journey-step:nth-child(4) .step-label { color: var(--spray-green); }
+
+  .journey-step h4 {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .journey-step p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .journey-step .step-tech {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .step-tech-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1px;
+    letter-spacing: 1px;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    color: var(--spray-purple);
+  }
+
+  /* ── Schema / Code Block ── */
+  .schema-block {
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+
+  .schema-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .schema-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .schema-dot:nth-child(1) { background: #ff5f57; }
+  .schema-dot:nth-child(2) { background: #febc2e; }
+  .schema-dot:nth-child(3) { background: #28c840; }
+
+  .schema-filename {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-left: 0.5rem;
+    letter-spacing: 1px;
+  }
+
+  .schema-block pre {
+    padding: 1.5rem;
+    overflow-x: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+
+  .schema-block pre .keyword { color: var(--spray-pink); }
+  .schema-block pre .type { color: var(--spray-cyan); }
+  .schema-block pre .func { color: var(--spray-yellow); }
+  .schema-block pre .string { color: var(--spray-green); }
+  .schema-block pre .comment { color: var(--text-dim); font-style: italic; }
+
+  /* ── Pages / Screens ── */
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .screen-card {
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .screen-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+
+  .screen-preview {
+    height: 220px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen-card:nth-child(1) .screen-preview {
+    background: linear-gradient(135deg, #1a0a20, #0f1a2e);
+  }
+  .screen-card:nth-child(1) .screen-preview::after {
+    content: 'echo\aGRAFFITI';
+    white-space: pre;
+    font-family: 'Permanent Marker', cursive;
+    font-size: 2.5rem;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, var(--spray-pink), var(--spray-purple), var(--spray-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+
+  .screen-card:nth-child(2) .screen-preview {
+    background:
+      radial-gradient(circle at 30% 40%, rgba(255, 45, 149, 0.2), transparent 40%),
+      radial-gradient(circle at 70% 60%, rgba(0, 240, 255, 0.2), transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(168, 85, 247, 0.15), transparent 30%),
+      linear-gradient(135deg, #0f1520, #0a1a25);
+  }
+  .screen-card:nth-child(2) .screen-preview::after {
+    content: '📍  📍  📍';
+    font-size: 2rem;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 1rem;
+    filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.5));
+  }
+
+  .screen-card:nth-child(3) .screen-preview {
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0, 240, 255, 0.03) 20px, rgba(0, 240, 255, 0.03) 21px),
+      repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(0, 240, 255, 0.03) 20px, rgba(0, 240, 255, 0.03) 21px),
+      linear-gradient(135deg, #080e18, #0a1520);
+  }
+  .screen-card:nth-child(3) .screen-preview::after {
+    content: '[ AR ]';
+    font-family: 'Space Mono', monospace;
+    font-size: 2rem;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--spray-cyan);
+    text-shadow: 0 0 30px var(--spray-cyan);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .screen-card:nth-child(4) .screen-preview {
+    background: linear-gradient(135deg, #15081f, #0f1a10);
+  }
+  .screen-card:nth-child(4) .screen-preview::after {
+    content: '✦';
+    font-size: 4rem;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--spray-yellow), var(--spray-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: spin 12s linear infinite;
+  }
+
+  .screen-info {
+    padding: 1.5rem;
+  }
+
+  .screen-route {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--spray-purple);
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .screen-info h4 {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .screen-info p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .screen-rendering {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .screen-rendering::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--spray-green);
+    box-shadow: 0 0 8px var(--spray-green);
+  }
+
+  /* ── Error Strategy ── */
+  .error-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .error-card {
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 1.5rem;
+    border-radius: 2px;
+  }
+
+  .error-card .error-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--spray-yellow);
+    margin-bottom: 0.75rem;
+  }
+
+  .error-card p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* ── Demo Strategy ── */
+  .demo-steps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    margin: 2rem 0;
+  }
+
+  .demo-step {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: var(--wall-mid);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .demo-step::after {
+    content: '>';
+    position: absolute;
+    right: -0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Space Mono', monospace;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+
+  .demo-step:last-child::after { display: none; }
+
+  .demo-step .demo-num {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--spray-pink), var(--spray-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .demo-step .demo-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── Footer ── */
+  footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 4rem 2rem;
+    border-top: 1px solid rgba(168, 85, 247, 0.1);
+  }
+
+  footer .footer-logo {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--spray-pink), var(--spray-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  footer p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── Divider ── */
+  .spray-divider {
+    height: 2px;
+    margin: 2rem 0;
+    background: linear-gradient(90deg,
+      var(--spray-pink),
+      var(--spray-purple),
+      var(--spray-cyan),
+      transparent
+    );
+    opacity: 0.3;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; text-shadow: 0 0 50px var(--spray-cyan), 0 0 100px rgba(0, 240, 255, 0.3); }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Scroll Animations ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .vision-grid,
+    .stack-grid,
+    .screens-grid { grid-template-columns: 1fr; }
+
+    .arch-flow {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    .arch-flow::before { display: none; }
+
+    .error-grid { grid-template-columns: 1fr; }
+
+    .demo-steps {
+      grid-template-columns: 1fr;
+    }
+
+    .demo-step::after { display: none; }
+
+    nav .nav-links { display: none; }
+
+    section { padding: 4rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ NAV ════════════ -->
+<nav>
+  <div class="logo">ECHO//GRAFFITI</div>
+  <ul class="nav-links">
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#screens">Screens</a></li>
+    <li><a href="#journey">Journey</a></li>
+    <li><a href="#schema">Schema</a></li>
+    <li><a href="#resilience">Resilience</a></li>
+    <li><a href="#demo">Demo</a></li>
+  </ul>
+</nav>
+
+<!-- ════════════ HERO ════════════ -->
+<section class="hero">
+  <div class="hero-badge">Cambridge AI x XR Hackathon 2026</div>
+  <h1>
+    <span class="line-1">echoGraffiti</span>
+    <span class="line-2">Design Document</span>
+  </h1>
+  <p class="hero-tagline">
+    A location-based AR experience that lets anyone leave AI-generated
+    street art on the walls of the real world — and discover what others
+    have left behind.
+  </p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span>Status</span>
+      <strong>Pre-Implementation</strong>
+    </div>
+    <div class="hero-meta-item">
+      <span>Platform</span>
+      <strong>Mobile Web (PWA)</strong>
+    </div>
+    <div class="hero-meta-item">
+      <span>Stack</span>
+      <strong>Next.js &middot; Supabase &middot; Gemini &middot; AR.js</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VISION ════════════ -->
+<section id="vision">
+  <div class="section-header reveal">
+    <span class="section-number">01</span>
+    <h2 class="section-title">Vision</h2>
+    <p class="section-subtitle">Why this exists</p>
+  </div>
+
+  <div class="concept-statement reveal">
+    <p>
+      Type what you want to say. <em>AI turns it into street art.</em>
+      It appears on the wall in AR for anyone nearby to discover.
+      The city becomes a living, evolving canvas &mdash; every surface a
+      potential gallery, every passerby a potential artist.
+    </p>
+    <div class="attribution">Core Pitch</div>
+  </div>
+
+  <div class="vision-grid reveal">
+    <div class="vision-card">
+      <span class="icon">🎨</span>
+      <h3>Democratized Street Art</h3>
+      <p>
+        No spray cans, no risk, no permits. Anyone with a phone becomes
+        a muralist. The AI translates intent into gritty, textured
+        graffiti that belongs on a brick wall.
+      </p>
+    </div>
+    <div class="vision-card">
+      <span class="icon">📡</span>
+      <h3>GPS-Anchored Echoes</h3>
+      <p>
+        Each piece is pinned to exact coordinates. Walk past a bridge
+        and discover what someone tagged there last night. Art that
+        haunts specific places, not feeds.
+      </p>
+    </div>
+    <div class="vision-card">
+      <span class="icon">👁️</span>
+      <h3>Invisible Layer</h3>
+      <p>
+        The city gains a secret dimension visible only through your
+        camera. A parallel world of expression layered on top of
+        concrete and glass.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ ARCHITECTURE ════════════ -->
+<section id="architecture">
+  <div class="section-header reveal">
+    <span class="section-number">02</span>
+    <h2 class="section-title">Architecture</h2>
+    <p class="section-subtitle">How the pieces connect</p>
+  </div>
+
+  <div class="arch-flow reveal">
+    <div class="arch-node">
+      <div class="arch-node-icon">✍️</div>
+      <div class="arch-node-label">User Input</div>
+      <div class="arch-node-desc">Text prompt + GPS</div>
+    </div>
+    <div class="arch-node">
+      <div class="arch-node-icon">🤖</div>
+      <div class="arch-node-label">Gemini AI</div>
+      <div class="arch-node-desc">Image generation</div>
+    </div>
+    <div class="arch-node">
+      <div class="arch-node-icon">🗄️</div>
+      <div class="arch-node-label">Supabase</div>
+      <div class="arch-node-desc">Storage + Postgres</div>
+    </div>
+    <div class="arch-node">
+      <div class="arch-node-icon">🔮</div>
+      <div class="arch-node-label">AR.js</div>
+      <div class="arch-node-desc">World rendering</div>
+    </div>
+  </div>
+
+  <div class="stack-grid reveal">
+    <div class="stack-card">
+      <div class="stack-card-header">
+        <div class="stack-card-dot"></div>
+        <h4>Frontend</h4>
+      </div>
+      <ul class="stack-list">
+        <li><span class="tech-name">Next.js 15</span><span class="tech-role">App Router + SSR</span></li>
+        <li><span class="tech-name">TypeScript</span><span class="tech-role">Type Safety</span></li>
+        <li><span class="tech-name">Tailwind CSS</span><span class="tech-role">Styling</span></li>
+        <li><span class="tech-name">A-Frame + AR.js</span><span class="tech-role">WebAR Rendering</span></li>
+        <li><span class="tech-name">Leaflet + react-leaflet</span><span class="tech-role">Map View</span></li>
+      </ul>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-header">
+        <div class="stack-card-dot"></div>
+        <h4>Backend</h4>
+      </div>
+      <ul class="stack-list">
+        <li><span class="tech-name">Next.js API Routes</span><span class="tech-role">Server Logic</span></li>
+        <li><span class="tech-name">Supabase</span><span class="tech-role">BaaS + Auth-free</span></li>
+        <li><span class="tech-name">PostgreSQL</span><span class="tech-role">Spatial Data</span></li>
+        <li><span class="tech-name">Supabase Storage</span><span class="tech-role">Image Bucket</span></li>
+      </ul>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-header">
+        <div class="stack-card-dot"></div>
+        <h4>AI Layer</h4>
+      </div>
+      <ul class="stack-list">
+        <li><span class="tech-name">Gemini 3.1 Flash</span><span class="tech-role">Image Model</span></li>
+        <li><span class="tech-name">Nano Banana 2</span><span class="tech-role">Generation Engine</span></li>
+        <li><span class="tech-name">Styled Prompting</span><span class="tech-role">Graffiti Aesthetic</span></li>
+      </ul>
+    </div>
+    <div class="stack-card">
+      <div class="stack-card-header">
+        <div class="stack-card-dot"></div>
+        <h4>Testing & Deploy</h4>
+      </div>
+      <ul class="stack-list">
+        <li><span class="tech-name">Playwright</span><span class="tech-role">E2E Tests</span></li>
+        <li><span class="tech-name">Vercel</span><span class="tech-role">Frontend Deploy</span></li>
+        <li><span class="tech-name">Supabase Cloud</span><span class="tech-role">Backend Host</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ SCREENS ════════════ -->
+<section id="screens">
+  <div class="section-header reveal">
+    <span class="section-number">03</span>
+    <h2 class="section-title">Screens</h2>
+    <p class="section-subtitle">Four surfaces, one experience</p>
+  </div>
+
+  <div class="screens-grid reveal">
+    <div class="screen-card">
+      <div class="screen-preview"></div>
+      <div class="screen-info">
+        <div class="screen-route">/</div>
+        <h4>Landing</h4>
+        <p>Dark atmospheric entry with gradient wordmark. Two CTAs: "Explore AR" and "View Map." Sets the tone &mdash; urban, electric, immediate.</p>
+        <div class="screen-rendering">SSR / Static</div>
+      </div>
+    </div>
+    <div class="screen-card">
+      <div class="screen-preview"></div>
+      <div class="screen-info">
+        <div class="screen-route">/map</div>
+        <h4>Map Discovery</h4>
+        <p>Leaflet map centered on user GPS. Nearby graffiti rendered as glowing pins. Tap to see the art, the prompt, who left it, and when.</p>
+        <div class="screen-rendering">Client-side</div>
+      </div>
+    </div>
+    <div class="screen-card">
+      <div class="screen-preview"></div>
+      <div class="screen-info">
+        <div class="screen-route">/ar</div>
+        <h4>AR Camera</h4>
+        <p>Live camera feed with graffiti floating at their GPS coordinates. Walk toward a piece and it grows. The city whispers through your screen.</p>
+        <div class="screen-rendering">Client-side / WebAR</div>
+      </div>
+    </div>
+    <div class="screen-card">
+      <div class="screen-preview"></div>
+      <div class="screen-info">
+        <div class="screen-route">/create</div>
+        <h4>Create</h4>
+        <p>Text prompt input, optional nickname. Hit generate. AI produces graffiti art in seconds. Pinned to your exact location instantly.</p>
+        <div class="screen-rendering">Client-side / API</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ USER JOURNEY ════════════ -->
+<section id="journey">
+  <div class="section-header reveal">
+    <span class="section-number">04</span>
+    <h2 class="section-title">User Journey</h2>
+    <p class="section-subtitle">From stranger to street artist</p>
+  </div>
+
+  <div class="journey-timeline reveal">
+    <div class="journey-step">
+      <div class="step-label">Step 01 &mdash; Arrive</div>
+      <h4>Land on the Surface</h4>
+      <p>
+        User opens the app on their phone. The landing page loads instantly &mdash;
+        dark, electric, inviting. Two clear paths: explore what's already
+        here, or go straight to AR. No signup. No friction. Just in.
+      </p>
+      <div class="step-tech">
+        <span class="step-tech-tag">Next.js SSR</span>
+        <span class="step-tech-tag">Tailwind</span>
+      </div>
+    </div>
+
+    <div class="journey-step">
+      <div class="step-label">Step 02 &mdash; Discover</div>
+      <h4>See the Invisible Layer</h4>
+      <p>
+        Through the map or AR camera, nearby graffiti materializes. Each piece
+        floats at the exact spot someone stood when they created it. The user
+        walks through a gallery that only exists through their screen &mdash;
+        art tethered to bridges, walls, benches, and doorways.
+      </p>
+      <div class="step-tech">
+        <span class="step-tech-tag">Leaflet.js</span>
+        <span class="step-tech-tag">A-Frame</span>
+        <span class="step-tech-tag">AR.js</span>
+        <span class="step-tech-tag">Geolocation API</span>
+      </div>
+    </div>
+
+    <div class="journey-step">
+      <div class="step-label">Step 03 &mdash; Create</div>
+      <h4>Leave Your Mark</h4>
+      <p>
+        Tap the floating action button. Type a message, a thought, a declaration.
+        The AI engine transforms raw text into spray-painted graffiti art &mdash;
+        textured, layered, dripping with character. It materializes at your feet
+        in seconds.
+      </p>
+      <div class="step-tech">
+        <span class="step-tech-tag">Gemini API</span>
+        <span class="step-tech-tag">Supabase Storage</span>
+        <span class="step-tech-tag">GPS Coordinates</span>
+      </div>
+    </div>
+
+    <div class="journey-step">
+      <div class="step-label">Step 04 &mdash; Echo</div>
+      <h4>Your Art Echoes Forward</h4>
+      <p>
+        Your creation is now pinned to that exact spot. Tomorrow, next week,
+        next month &mdash; anyone who walks past with the app open will discover
+        what you left there. Your words, transformed into art, echoing through
+        the city long after you've gone.
+      </p>
+      <div class="step-tech">
+        <span class="step-tech-tag">PostgreSQL</span>
+        <span class="step-tech-tag">Spatial Query</span>
+        <span class="step-tech-tag">Public API</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ SCHEMA ════════════ -->
+<section id="schema">
+  <div class="section-header reveal">
+    <span class="section-number">05</span>
+    <h2 class="section-title">Data Schema</h2>
+    <p class="section-subtitle">The shape of an echo</p>
+  </div>
+
+  <div class="schema-block reveal">
+    <div class="schema-header">
+      <div class="schema-dot"></div>
+      <div class="schema-dot"></div>
+      <div class="schema-dot"></div>
+      <span class="schema-filename">supabase/schema.sql</span>
+    </div>
+    <pre><span class="keyword">CREATE TABLE</span> <span class="func">graffiti</span> (
+  id          <span class="type">UUID</span>          <span class="keyword">PRIMARY KEY DEFAULT</span> <span class="func">gen_random_uuid</span>(),
+  prompt      <span class="type">TEXT</span>          <span class="keyword">NOT NULL</span>,          <span class="comment">-- what the user typed</span>
+  image_url   <span class="type">TEXT</span>          <span class="keyword">NOT NULL</span>,          <span class="comment">-- Supabase Storage URL</span>
+  latitude    <span class="type">FLOAT8</span>        <span class="keyword">NOT NULL</span>,          <span class="comment">-- GPS lat</span>
+  longitude   <span class="type">FLOAT8</span>        <span class="keyword">NOT NULL</span>,          <span class="comment">-- GPS lng</span>
+  creator     <span class="type">TEXT</span>          <span class="keyword">DEFAULT</span> <span class="string">'Anonymous'</span>,  <span class="comment">-- optional nickname</span>
+  created_at  <span class="type">TIMESTAMPTZ</span>   <span class="keyword">DEFAULT</span> <span class="func">now</span>()        <span class="comment">-- when it was born</span>
+);
+
+<span class="comment">-- RLS: public read + insert, no auth required</span>
+<span class="keyword">ALTER TABLE</span> graffiti <span class="keyword">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="keyword">CREATE POLICY</span> <span class="string">"Anyone can read"</span>
+  <span class="keyword">ON</span> graffiti <span class="keyword">FOR SELECT USING</span> (<span class="func">true</span>);
+
+<span class="keyword">CREATE POLICY</span> <span class="string">"Anyone can create"</span>
+  <span class="keyword">ON</span> graffiti <span class="keyword">FOR INSERT WITH CHECK</span> (<span class="func">true</span>);</pre>
+  </div>
+
+  <div class="schema-block reveal">
+    <div class="schema-header">
+      <div class="schema-dot"></div>
+      <div class="schema-dot"></div>
+      <div class="schema-dot"></div>
+      <span class="schema-filename">api/generate/route.ts — AI prompt template</span>
+    </div>
+    <pre><span class="keyword">const</span> styledPrompt = <span class="string">`Street art graffiti mural style,
+  spray painted on a brick wall, vibrant colors,
+  dripping paint, urban texture:
+
+  "</span><span class="type">${userPrompt}</span><span class="string">"</span><span class="string">`</span>;
+
+<span class="comment">// Model: gemini-3.1-flash-image-preview</span>
+<span class="comment">// Output: 1024x1024 PNG → Supabase Storage</span>
+<span class="comment">// Latency target: &lt; 5 seconds</span></pre>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ RESILIENCE ════════════ -->
+<section id="resilience">
+  <div class="section-header reveal">
+    <span class="section-number">06</span>
+    <h2 class="section-title">Resilience</h2>
+    <p class="section-subtitle">When the wall fights back</p>
+  </div>
+
+  <div class="error-grid reveal">
+    <div class="error-card">
+      <div class="error-type">GPS Denied</div>
+      <p>Graceful fallback banner explaining that location is required. Map defaults to a demo area. AR shows instructional overlay rather than blank camera.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-type">Camera Blocked</div>
+      <p>AR page shows stylized placeholder with instructions. Redirect to map view as the primary discovery mode. No dead ends.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-type">AI Generation Fail</div>
+      <p>Toast notification with retry button. If API is fully down, show a curated fallback image with the user's text overlaid in graffiti font.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-type">Offline / Slow</div>
+      <p>Service worker caches the shell. Previously loaded graffiti persists in local state. Creation queued for when connectivity returns.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-type">No Nearby Art</div>
+      <p>Instead of empty state, show encouraging message: "Be the first to tag this spot." Pull in the nearest pieces as distant pins on the map edge.</p>
+    </div>
+    <div class="error-card">
+      <div class="error-type">AR Drift</div>
+      <p>GPS accuracy varies indoors. Show accuracy indicator. If accuracy &gt; 100m, warn user and suggest moving outdoors for best experience.</p>
+    </div>
+  </div>
+</section>
+
+<div class="spray-divider" style="max-width: 1200px; margin: 0 auto;"></div>
+
+<!-- ════════════ DEMO ════════════ -->
+<section id="demo">
+  <div class="section-header reveal">
+    <span class="section-number">07</span>
+    <h2 class="section-title">Demo Strategy</h2>
+    <p class="section-subtitle">The 3-minute pitch</p>
+  </div>
+
+  <div class="demo-steps reveal">
+    <div class="demo-step">
+      <span class="demo-num">1</span>
+      <span class="demo-label">Pre-seed venue with 5-10 pieces</span>
+    </div>
+    <div class="demo-step">
+      <span class="demo-num">2</span>
+      <span class="demo-label">Show landing page on projector</span>
+    </div>
+    <div class="demo-step">
+      <span class="demo-num">3</span>
+      <span class="demo-label">Open map view &mdash; show pins</span>
+    </div>
+    <div class="demo-step">
+      <span class="demo-num">4</span>
+      <span class="demo-label">Switch to AR &mdash; walk toward art</span>
+    </div>
+    <div class="demo-step">
+      <span class="demo-num">5</span>
+      <span class="demo-label">Live create a new piece on stage</span>
+    </div>
+  </div>
+
+  <div class="concept-statement reveal" style="border-left-color: var(--spray-cyan); background: linear-gradient(90deg, rgba(0, 240, 255, 0.04), transparent);">
+    <p>
+      Backup plan: if GPS is unreliable indoors, pre-record
+      a <em>30-second AR walkthrough video</em> outside the venue
+      and play it during the pitch. Always have the live map
+      as a reliable fallback.
+    </p>
+    <div class="attribution">Contingency</div>
+  </div>
+</section>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer>
+  <div class="footer-logo">ECHO//GRAFFITI</div>
+  <p>Design Document &middot; Cambridge AI &times; XR Hackathon &middot; March 2026</p>
+</footer>
+
+<!-- ════════════ SCROLL REVEAL ════════════ -->
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
