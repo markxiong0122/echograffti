@@ -61,6 +61,7 @@ export default function ARPage() {
           .lte("latitude", userLat + RADIUS)
           .gte("longitude", userLng - RADIUS)
           .lte("longitude", userLng + RADIUS)
+          .order("created_at", { ascending: false })
           .limit(20);
 
         if (!mounted || !containerRef.current) return;
@@ -129,6 +130,12 @@ export default function ARPage() {
           &larr; Exit AR
         </Link>
         <span className="text-white/60 text-xs font-mono">{status}</span>
+        <button
+  onClick={() => window.location.reload()}
+  className="text-white/60 hover:text-white text-xs font-mono border border-white/20 px-2 py-1 rounded"
+>
+  ↺ Refresh
+</button>
         <Link
           href="/create"
           className="bg-gradient-to-r from-[#ff2d95] to-[#a855f7] text-white font-bold py-2 px-4 rounded-xl text-sm"
