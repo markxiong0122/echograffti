@@ -38,6 +38,12 @@ export default function CreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let deviceId = localStorage.getItem("device_id");
+
+if (!deviceId) {
+  deviceId = crypto.randomUUID();
+  localStorage.setItem("device_id", deviceId);
+}
     if (!prompt.trim() || latitude == null || longitude == null) return;
 
     setLoading(true);
@@ -52,6 +58,7 @@ export default function CreatePage() {
           latitude,
           longitude,
           creator: creator.trim() || undefined,
+          deviceId,
         }),
       });
 
