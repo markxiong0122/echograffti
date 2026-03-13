@@ -18,9 +18,23 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabase();
     const ai = getAI();
+const forwardedFor = request.headers.get("x-forwarded-for") || "";
+const ip =
+  forwardedFor.split(",")[0].trim() ||
+  request.headers.get("x-real-ip") ||
+  "unknown";
+    const { prompt, latitude, longitude, creator, deviceId } = await request.json();
+const { count } = await supabase
+  .from("generation_limits")
+  .select("*", { count: "exact", head: true })
+  .eq("device_id", deviceId);
 
-    const { prompt, latitude, longitude, creator } = await request.json();
-
+if ((count ?? 0) >= 1) {
+  return NextResponse.json(
+    { error: "Each device can only generate one graffiti." },
+    { status: 429 }
+  );
+}
     if (!prompt || latitude == null || longitude == null) {
       return NextResponse.json(
         { error: "prompt, latitude, and longitude are required" },
@@ -91,7 +105,12 @@ const mimeType = "image/png";
       ])
       .select()
       .single();
-
+await supabase.from("generation_limits").insert([
+  {
+    device_id: deviceId,
+    ip,
+  },
+]);
     if (insertError) {
       console.error("Insert error:", insertError);
       return NextResponse.json(
