@@ -39,15 +39,8 @@ const result = await ai.images.generate({
   quality: "medium",
 });
 
-<<<<<<< HEAD
-const imageData = result.data?.[0]?.b64_json;
-if (!imageData) {
-  return NextResponse.json(
-    { error: "No image data returned from AI" },
-    { status: 502 }
-  );
-}
-=======
+
+
 const imageBase64 = result.data?.[0]?.b64_json;
 
 if (!imageBase64) {
@@ -58,7 +51,6 @@ if (!imageBase64) {
 }
 
 const imageData = imageBase64;
->>>>>>> 404f76a (fix typescript build error)
 const mimeType = "image/png";
 
     // Upload to Supabase Storage
