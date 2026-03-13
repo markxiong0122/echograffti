@@ -53,7 +53,7 @@ export default function ARPage() {
         const userLng = position.coords.longitude;
 
         setStatus("Loading nearby graffiti...");
-        const RADIUS = 0.005;
+        const RADIUS = 0.02;
         const { data: nearby } = await supabase
           .from("graffiti")
           .select("*")
@@ -68,7 +68,6 @@ export default function ARPage() {
         const graffiti: Graffiti[] = (nearby as Graffiti[]) || [];
 
         const entityHTML = graffiti
-  .slice(0, 5)
   .map((g, index) => {
     const x = (index - (Math.min(graffiti.length, 5) - 1) / 2) * 2.5;
     const y = 1.5;
@@ -76,7 +75,7 @@ export default function ARPage() {
 
     return `
       <a-image
-        src="${g.image_url}"
+        src="${g.image_url}?t=${Date.now()}"
         position="${x} ${y} ${z}"
         look-at="[camera]"
         scale="2.5 2.5 2.5"
